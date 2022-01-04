@@ -6,7 +6,7 @@ orbs:
 parameters:
   node_version:
     type: string
-    default: '14'
+    default: '14-browsers'
 
 commands:
   install_deps:
