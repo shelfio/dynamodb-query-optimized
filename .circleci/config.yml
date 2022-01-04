@@ -1,0 +1,33 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@1.1.6
+
+parameters:
+  node_version:
+    type: string
+    default: '14'
+
+commands:
+  install_deps:
+    steps:
+      - node/with-cache:
+          cache-version: v1-all
+          cache-key: package.json
+          dir: ~/repo/node_modules
+          use-strict-cache: true
+          steps:
+            - run: yarn install --pure-lockfile --no-progress
+
+jobs:
+  build:
+    executor:
+      name: node/default
+      tag: << pipeline.parameters.node_version >>
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - install_deps
+      - run: yarn test
+      - run: yarn type-check
+      - run: yarn lint:ci
