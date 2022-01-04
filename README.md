@@ -8,6 +8,16 @@
 $ yarn add @shelf/dynamodb-query-optimized
 ```
 
+## Benchmark
+
+```
+Regular query: <1 MB of items: 650ms
+Optimized query: <1 MB of items: 704ms
+
+Regular query: ~21 MB of items: 9.023s
+Optimized query: ~21 MB of items: 4.988s # almost 2x faster
+```
+
 ## Usage
 
 For now, it supports `aws-sdk` v2. Feel free to submit a PR to support `aws-sdk` v3!
