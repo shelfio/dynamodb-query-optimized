@@ -56,6 +56,31 @@ export async function queryOptimized<T>(params: QueryOptimizedParams): Promise<T
   return uniqBy(allItems, item => JSON.stringify(item));
 }
 
+export async function queryRegular<T>(params: QueryOptimizedParams): Promise<T[]> {
+  const {queryParams, queryFunction} = params;
+
+  let allItems: T[] = [];
+  let lastEvaluatedKey;
+
+  do {
+    const resp: DocumentClient.QueryOutput = await executeLeftQuery(
+      queryFunction,
+      queryParams,
+      lastEvaluatedKey
+    );
+
+    if (resp.Items && resp.Items.length) {
+      allItems = allItems.concat(resp.Items! as T[]);
+    }
+
+    if (resp.LastEvaluatedKey) {
+      lastEvaluatedKey = resp.LastEvaluatedKey;
+    }
+  } while (lastEvaluatedKey);
+
+  return allItems;
+}
+
 async function executeLeftQuery(
   queryFunction: QueryOptimizedParams['queryFunction'],
   queryParams: QueryOptimizedParams['queryParams'],
