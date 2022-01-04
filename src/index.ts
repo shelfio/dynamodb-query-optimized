@@ -73,9 +73,7 @@ export async function queryRegular<T>(params: QueryOptimizedParams): Promise<T[]
       allItems = allItems.concat(resp.Items! as T[]);
     }
 
-    if (resp.LastEvaluatedKey) {
-      lastEvaluatedKey = resp.LastEvaluatedKey;
-    }
+    lastEvaluatedKey = resp.LastEvaluatedKey;
   } while (lastEvaluatedKey);
 
   return allItems;
