@@ -7,7 +7,15 @@ const shouldIgnoreLocalDDB = Boolean(process.env.SHOULD_IGNORE_LOCAL_DDB); // Us
 const ddbEndpoint = shouldIgnoreLocalDDB
   ? // eslint-disable-next-line multiline-ternary
     {}
-  : {endpoint: 'localhost:8000', sslEnabled: false, region: 'local-env'};
+  : {
+      endpoint: 'localhost:8000',
+      sslEnabled: false,
+      region: 'local-env',
+      credentials: {
+        accessKeyId: 'fakeMyKeyId',
+        secretAccessKey: 'fakeSecretAccessKey',
+      },
+    };
 
 export const ddb = getDocumentClient({
   ddbClientParams: {
