@@ -16,7 +16,7 @@ import DynamoDB from 'aws-sdk/clients/dynamodb';
 
 const ddb = new DynamoDB.DocumentClient({region: 'us-east-1'});
 
-queryOptimized({
+const results = await queryOptimized({
   queryFunction: ddb.query.bind(ddb),
   queryParams: {
     TableName: 'example_table',
@@ -32,6 +32,11 @@ queryOptimized({
     },
   },
 });
+
+console.log(results);
+/*
+  [{hash_key: 'foo', range_key: 'bar'}, {hash_key: 'foo', range_key: 'baz'}]
+ */
 ```
 
 ## Publish
