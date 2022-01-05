@@ -2,6 +2,8 @@
 
 > 2x faster DynamoDB queries when you need to query 2+ MB of data
 
+Read the blog post article explaining how it works: https://vladholubiev.medium.com/how-to-speed-up-long-dynamodb-queries-by-2x-c66a2987d53a
+
 ## Install
 
 ```
