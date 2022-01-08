@@ -45,7 +45,7 @@
     "p-map": "4.0.0"
   },
   "devDependencies": {
-    "@aws-sdk/client-dynamodb": "3.45.0",
+    "@aws-sdk/client-dynamodb": "3.46.0",
     "@babel/cli": "7.16.7",
     "@babel/core": "7.16.7",
     "@shelf/aws-ddb-with-xray": "0.1.1",
