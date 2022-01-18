@@ -49,7 +49,7 @@
     "@babel/cli": "7.16.7",
     "@babel/core": "7.16.7",
     "@shelf/aws-ddb-with-xray": "0.1.1",
-    "@shelf/babel-config": "0.1.5",
+    "@shelf/babel-config": "0.1.8",
     "@shelf/eslint-config": "2.8.0",
     "@shelf/jest-dynamodb": "2.2.3",
     "@shelf/prettier-config": "1.0.0",
