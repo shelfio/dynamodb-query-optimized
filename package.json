@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "lodash": "4.17.21",
-    "p-map": "4.0.0"
+    "p-map": "5.5.0"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "3.100.0",
