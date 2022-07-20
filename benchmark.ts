@@ -24,7 +24,7 @@ const ddb = new DynamoDB.DocumentClient({region: 'us-east-1'});
   console.timeEnd('Optimized query: ~21 MB of items');
 })();
 
-async function testQueryRegular(hash_key: string) {
+function testQueryRegular(hash_key: string) {
   return queryRegular({
     queryFunction: ddb.query.bind(ddb),
     queryParams: {
@@ -44,7 +44,7 @@ async function testQueryRegular(hash_key: string) {
   });
 }
 
-async function testQueryOptimized(hash_key: string) {
+function testQueryOptimized(hash_key: string) {
   return queryOptimized({
     queryFunction: ddb.query.bind(ddb),
     queryParams: {

@@ -6,11 +6,11 @@ type QueryOptimizedParams = {
   queryParams: Omit<DocumentClient.QueryInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
 };
 
-/*
- This method is optimized to query indices where a query might scan 2+ MB of data.
- It works by launching 2 parallel queries that iterate from both ends of the index
- until the meet in the middle
- */
+//
+// This method is optimized to query indices where a query might scan 2+ MB of data.
+// It works by launching 2 parallel queries that iterate from both ends of the index
+// until the meet in the middle
+//
 export async function queryOptimized<T>(params: QueryOptimizedParams): Promise<T[]> {
   const {queryParams, queryFunction} = params;
 
@@ -79,7 +79,7 @@ export async function queryRegular<T>(params: QueryOptimizedParams): Promise<T[]
   return allItems;
 }
 
-async function executeLeftQuery(
+function executeLeftQuery(
   queryFunction: QueryOptimizedParams['queryFunction'],
   queryParams: QueryOptimizedParams['queryParams'],
   key?: any
@@ -91,7 +91,7 @@ async function executeLeftQuery(
   }).promise();
 }
 
-async function executeRightQuery(
+function executeRightQuery(
   queryFunction: QueryOptimizedParams['queryFunction'],
   queryParams: QueryOptimizedParams['queryParams'],
   key?: any
