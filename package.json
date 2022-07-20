@@ -40,9 +40,6 @@
   "jest": {
     "preset": "@shelf/jest-dynamodb"
   },
-  "resolutions": {
-    "aws-sdk": "2.1055.0"
-  },
   "dependencies": {
     "lodash": "4.17.21",
     "p-map": "4.0.0"
