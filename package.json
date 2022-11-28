@@ -55,7 +55,7 @@
     "@shelf/prettier-config": "1.0.0",
     "@shelf/tsconfig": "0.0.6",
     "@types/jest": "28.1.8",
-    "@types/lodash": "4.14.182",
+    "@types/lodash": "4.14.190",
     "@types/node": "16",
     "aws-sdk": "2.1136.0",
     "eslint": "8.22.0",
