@@ -48,7 +48,7 @@
     "@aws-sdk/client-dynamodb": "3.358.0",
     "@babel/cli": "7.22.5",
     "@babel/core": "7.22.5",
-    "@shelf/aws-ddb-with-xray": "0.1.1",
+    "@shelf/aws-ddb-with-xray": "1.2.3",
     "@shelf/babel-config": "1.0.2",
     "@shelf/eslint-config": "2.18.0",
     "@shelf/jest-dynamodb": "3.3.1",
