@@ -1,3 +1,5 @@
+import {marshall} from '@aws-sdk/util-dynamodb';
+import {QueryCommand} from '@aws-sdk/client-dynamodb';
 import {insertMany} from './helpers/insert-many';
 import {deleteAll} from './helpers/delete-all';
 import {ddb} from './helpers/ddb';
@@ -65,7 +67,8 @@ afterAll(async () => {
 
 function testQueryRegular(hash_key: string) {
   return queryRegular({
-    queryFunction: ddb.query.bind(ddb),
+    QueryCommand: QueryCommand,
+    client: ddb,
     queryParams: {
       TableName: 'example_table',
       ProjectionExpression: 'hash_key, range_key',
@@ -74,17 +77,18 @@ function testQueryRegular(hash_key: string) {
         '#hash_key': 'hash_key',
         '#range_key': 'range_key',
       },
-      ExpressionAttributeValues: {
+      ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
-      },
+      }),
     },
   });
 }
 
 function testQueryOptimized(hash_key: string) {
   return queryOptimized({
-    queryFunction: ddb.query.bind(ddb),
+    QueryCommand: QueryCommand,
+    client: ddb,
     queryParams: {
       TableName: 'example_table',
       ProjectionExpression: 'hash_key, range_key',
@@ -93,10 +97,10 @@ function testQueryOptimized(hash_key: string) {
         '#hash_key': 'hash_key',
         '#range_key': 'range_key',
       },
-      ExpressionAttributeValues: {
+      ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
-      },
+      }),
     },
   });
 }

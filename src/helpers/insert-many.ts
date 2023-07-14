@@ -1,4 +1,6 @@
-import type {DocumentClient} from 'aws-sdk/lib/dynamodb/document_client';
+import type {BatchWriteCommandInput, BatchWriteCommandOutput} from '@aws-sdk/lib-dynamodb';
+import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
+import {BatchWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {chunk} from 'lodash';
 import pMap from 'p-map';
 import {ddb} from './ddb';
@@ -11,39 +13,37 @@ type InsertManyParams = {
 export function insertMany(
   params: InsertManyParams,
   retryCount = 3
-): Promise<DocumentClient.BatchWriteItemOutput[]> {
+): Promise<BatchWriteCommandOutput[]> {
   const {TableName, Items} = params;
   const itemsChunks = chunk(Items, 25);
 
   const paramsChunks = itemsChunks.map(
-    (itemsChunk): DocumentClient.BatchWriteItemInput =>
-      makePutRequestItems({TableName, Items: itemsChunk})
+    (itemsChunk): BatchWriteCommandInput => makePutRequestItems({TableName, Items: itemsChunk})
   );
 
   return pMap(
     paramsChunks,
-    (params): Promise<DocumentClient.BatchWriteItemOutput> => batchWrite(params, retryCount),
+    (params): Promise<BatchWriteCommandOutput> => batchWrite(params, retryCount),
     {concurrency: 100, stopOnError: false}
   );
 }
 
 export async function batchWrite(
-  params: DocumentClient.BatchWriteItemInput,
+  params: BatchWriteCommandInput,
   retryCounter = 0
-): Promise<DocumentClient.BatchWriteItemOutput> {
+): Promise<BatchWriteCommandOutput> {
   if (retryCounter > 10) {
     retryCounter = 10;
   }
 
-  const results = await ddb.batchWrite(params).promise();
+  const results = await ddb.send(new BatchWriteCommand(params));
 
   const isAnyOpFailed = Boolean(Object.keys(results?.UnprocessedItems || {}).length);
 
   if (retryCounter > 0 && isAnyOpFailed) {
     return batchWrite(
       {
-        RequestItems:
-          results.UnprocessedItems as DocumentClient.BatchWriteItemInput['RequestItems'],
+        RequestItems: results.UnprocessedItems as BatchWriteCommandInput['RequestItems'],
       },
       retryCounter - 1
     );
@@ -52,9 +52,9 @@ export async function batchWrite(
   return results;
 }
 
-type PutRequestItem = Omit<DocumentClient.WriteRequest, 'DeleteRequest'>;
+type PutRequestItem = Omit<WriteRequest, 'DeleteRequest'>;
 
-function makePutRequestItems(params: InsertManyParams): DocumentClient.BatchWriteItemInput {
+function makePutRequestItems(params: InsertManyParams): BatchWriteCommandInput {
   const {TableName, Items} = params;
 
   return {
@@ -64,7 +64,7 @@ function makePutRequestItems(params: InsertManyParams): DocumentClient.BatchWrit
   };
 }
 
-function makePutRequestItem(item: Record<string, unknown>): PutRequestItem {
+function makePutRequestItem(item: Record<string, AttributeValue>): PutRequestItem {
   return {
     PutRequest: {
       Item: item,
