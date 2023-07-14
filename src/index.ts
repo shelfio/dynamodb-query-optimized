@@ -1,9 +1,13 @@
-import type {DocumentClient} from 'aws-sdk/lib/dynamodb/document_client';
 import {isEqual, uniqBy} from 'lodash';
+import {unmarshall} from '@aws-sdk/util-dynamodb';
+import type {AttributeValue, QueryCommandInput, QueryCommandOutput} from '@aws-sdk/client-dynamodb';
+import type {DynamoDBClient} from '@aws-sdk/client-dynamodb';
+import type {QueryCommand} from '@aws-sdk/client-dynamodb';
 
 type QueryOptimizedParams = {
-  queryFunction: DocumentClient['query'];
-  queryParams: Omit<DocumentClient.QueryInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
+  client: DynamoDBClient;
+  QueryCommand: typeof QueryCommand;
+  queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
 };
 
 //
@@ -11,9 +15,11 @@ type QueryOptimizedParams = {
 // It works by launching 2 parallel queries that iterate from both ends of the index
 // until the meet in the middle
 //
-export async function queryOptimized<T>(params: QueryOptimizedParams): Promise<T[]> {
-  const {queryParams, queryFunction} = params;
-
+export async function queryOptimized<T extends Record<string, any>>({
+  queryParams,
+  QueryCommand,
+  client,
+}: QueryOptimizedParams): Promise<T[]> {
   let allItems: T[] = [];
   let allItemsFromLeftQuery: T[] = [];
   let allItemsFromRightQuery: T[] = [];
@@ -25,8 +31,8 @@ export async function queryOptimized<T>(params: QueryOptimizedParams): Promise<T
 
   do {
     const responses = await Promise.all([
-      executeLeftQuery(queryFunction, queryParams, queryLeftLastEvaluatedKey),
-      executeRightQuery(queryFunction, queryParams, queryRightLastEvaluatedKey),
+      executeLeftQuery({client, queryParams, QueryCommand}, queryLeftLastEvaluatedKey),
+      executeRightQuery({client, queryParams, QueryCommand}, queryRightLastEvaluatedKey),
     ]);
 
     const [respLeft, respRight] = responses as any;
@@ -53,19 +59,24 @@ export async function queryOptimized<T>(params: QueryOptimizedParams): Promise<T
     allItems = allItems.concat(respRight.Items!);
   } while (!isMiddleReached && !areBothQueriesExhausted);
 
-  return uniqBy(allItems, item => JSON.stringify(item));
+  return uniqBy(allItems, item => JSON.stringify(item)).map(item => unmarshall(item) as T);
 }
 
-export async function queryRegular<T>(params: QueryOptimizedParams): Promise<T[]> {
-  const {queryParams, queryFunction} = params;
-
+export async function queryRegular<T extends Record<string, AttributeValue>>({
+  client,
+  queryParams,
+  QueryCommand,
+}: QueryOptimizedParams): Promise<T[]> {
   let allItems: T[] = [];
   let lastEvaluatedKey;
 
   do {
-    const resp: DocumentClient.QueryOutput = await executeLeftQuery(
-      queryFunction,
-      queryParams,
+    const resp: QueryCommandOutput = await executeLeftQuery(
+      {
+        client,
+        queryParams,
+        QueryCommand,
+      },
       lastEvaluatedKey
     );
 
@@ -80,27 +91,29 @@ export async function queryRegular<T>(params: QueryOptimizedParams): Promise<T[]
 }
 
 function executeLeftQuery(
-  queryFunction: QueryOptimizedParams['queryFunction'],
-  queryParams: QueryOptimizedParams['queryParams'],
+  {client, queryParams, QueryCommand}: QueryOptimizedParams,
   key?: any
-): Promise<DocumentClient.QueryOutput> {
-  return queryFunction({
-    ...queryParams,
-    ...(key ? {ExclusiveStartKey: key} : {}),
-    ScanIndexForward: true,
-  }).promise();
+): Promise<QueryCommandOutput> {
+  return client.send(
+    new QueryCommand({
+      ...queryParams,
+      ...(key ? {ExclusiveStartKey: key} : {}),
+      ScanIndexForward: true,
+    })
+  );
 }
 
 function executeRightQuery(
-  queryFunction: QueryOptimizedParams['queryFunction'],
-  queryParams: QueryOptimizedParams['queryParams'],
+  {client, queryParams, QueryCommand}: QueryOptimizedParams,
   key?: any
-): Promise<DocumentClient.QueryOutput> {
-  return queryFunction({
-    ...queryParams,
-    ...(key ? {ExclusiveStartKey: key} : {}),
-    ScanIndexForward: false,
-  }).promise();
+): Promise<QueryCommandOutput> {
+  return client.send(
+    new QueryCommand({
+      ...queryParams,
+      ...(key ? {ExclusiveStartKey: key} : {}),
+      ScanIndexForward: false,
+    })
+  );
 }
 
 function checkIfMiddleReached<T>(allItemsFromLeftQuery: T[], allItemsFromRightQuery: T[]): boolean {

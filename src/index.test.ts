@@ -1,3 +1,5 @@
+import {marshall} from '@aws-sdk/util-dynamodb';
+import {QueryCommand} from '@aws-sdk/client-dynamodb';
 import {insertMany} from './helpers/insert-many';
 import {deleteAll} from './helpers/delete-all';
 import {ddb} from './helpers/ddb';
@@ -50,6 +52,12 @@ it(`should return all elements using optimized find query for 1 MB table`, async
   expect(result).toHaveLength(250);
 });
 
+it(`should return unmarshalled element for 1 MB table`, async () => {
+  const result = await testQueryOptimized('some-hash-key-1mb');
+
+  expect(result[0]).toEqual({hash_key: 'some-hash-key-1mb', range_key: 'some-range-key-3000'});
+});
+
 it(`should return all elements using regular find query for 1 MB table`, async () => {
   const result = await testQueryRegular('some-hash-key-1mb');
 
@@ -65,7 +73,8 @@ afterAll(async () => {
 
 function testQueryRegular(hash_key: string) {
   return queryRegular({
-    queryFunction: ddb.query.bind(ddb),
+    QueryCommand: QueryCommand,
+    client: ddb,
     queryParams: {
       TableName: 'example_table',
       ProjectionExpression: 'hash_key, range_key',
@@ -74,17 +83,18 @@ function testQueryRegular(hash_key: string) {
         '#hash_key': 'hash_key',
         '#range_key': 'range_key',
       },
-      ExpressionAttributeValues: {
+      ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
-      },
+      }),
     },
   });
 }
 
 function testQueryOptimized(hash_key: string) {
   return queryOptimized({
-    queryFunction: ddb.query.bind(ddb),
+    QueryCommand: QueryCommand,
+    client: ddb,
     queryParams: {
       TableName: 'example_table',
       ProjectionExpression: 'hash_key, range_key',
@@ -93,10 +103,10 @@ function testQueryOptimized(hash_key: string) {
         '#hash_key': 'hash_key',
         '#range_key': 'range_key',
       },
-      ExpressionAttributeValues: {
+      ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
-      },
+      }),
     },
   });
 }

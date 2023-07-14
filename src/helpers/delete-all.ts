@@ -1,56 +1,60 @@
-import type {DocumentClient} from 'aws-sdk/lib/dynamodb/document_client';
+import type {
+  BatchWriteCommandInput,
+  BatchWriteCommandOutput,
+  ScanCommandInput,
+} from '@aws-sdk/lib-dynamodb';
+import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
+import {ScanCommand} from '@aws-sdk/lib-dynamodb';
 import {chunk} from 'lodash';
 import {ddb} from './ddb';
 import {batchWrite} from './insert-many';
 
-export async function deleteAll(
-  params: DocumentClient.ScanInput
-): Promise<DocumentClient.BatchWriteItemOutput[]> {
+export async function deleteAll(params: ScanCommandInput): Promise<BatchWriteCommandOutput[]> {
   let LastEvaluatedKey;
   let resp;
 
   do {
-    resp = await ddb
-      .scan({
-        ...params,
-        ...(LastEvaluatedKey ? {ExclusiveStartKey: LastEvaluatedKey} : {}),
-      })
-      .promise();
+    const scanCommand: ScanCommand = new ScanCommand({
+      ...params,
+      ...(LastEvaluatedKey ? {ExclusiveStartKey: LastEvaluatedKey} : {}),
+    });
+
+    resp = await ddb.send(scanCommand);
 
     // eslint-disable-next-line prefer-destructuring
     LastEvaluatedKey = resp.LastEvaluatedKey;
   } while (LastEvaluatedKey);
 
-  return deleteMany({TableName: params.TableName, Keys: resp.Items as Record<string, unknown>[]});
+  return deleteMany({
+    TableName: params.TableName!,
+    Keys: resp.Items as Record<string, AttributeValue>[],
+  });
 }
 
-type DeleteRequestItem = Omit<DocumentClient.WriteRequest, 'PutRequest'>;
+type DeleteRequestItem = Omit<WriteRequest, 'PutRequest'>;
 
 type DeleteManyParams = {
   TableName: string;
-  Keys: Record<string, unknown>[];
+  Keys: Record<string, AttributeValue>[];
 };
 
 export function deleteMany(
   params: DeleteManyParams,
   retryCount = 0
-): Promise<DocumentClient.BatchWriteItemOutput[]> {
+): Promise<BatchWriteCommandOutput[]> {
   const {TableName, Keys} = params;
   const keysChunks = chunk(Keys, 25);
 
   const paramsChunks = keysChunks.map(
-    (keysChunk): DocumentClient.BatchWriteItemInput =>
-      makeDeleteRequestItems({TableName, Keys: keysChunk})
+    (keysChunk): BatchWriteCommandInput => makeDeleteRequestItems({TableName, Keys: keysChunk})
   );
 
   return Promise.all(
-    paramsChunks.map(
-      (params): Promise<DocumentClient.BatchWriteItemOutput> => batchWrite(params, retryCount)
-    )
+    paramsChunks.map((params): Promise<BatchWriteCommandOutput> => batchWrite(params, retryCount))
   );
 }
 
-function makeDeleteRequestItems(params: DeleteManyParams): DocumentClient.BatchWriteItemInput {
+function makeDeleteRequestItems(params: DeleteManyParams): BatchWriteCommandInput {
   const {TableName, Keys} = params;
 
   return {
@@ -60,7 +64,7 @@ function makeDeleteRequestItems(params: DeleteManyParams): DocumentClient.BatchW
   };
 }
 
-function makeDeleteRequestItem(key: Record<string, unknown>): DeleteRequestItem {
+function makeDeleteRequestItem(key: Record<string, AttributeValue>): DeleteRequestItem {
   return {
     DeleteRequest: {
       Key: key,
