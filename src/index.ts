@@ -1,4 +1,5 @@
 import {isEqual, uniqBy} from 'lodash';
+import {unmarshall} from '@aws-sdk/util-dynamodb';
 import type {AttributeValue, QueryCommandInput, QueryCommandOutput} from '@aws-sdk/client-dynamodb';
 import type {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import type {QueryCommand} from '@aws-sdk/client-dynamodb';
@@ -14,7 +15,7 @@ type QueryOptimizedParams = {
 // It works by launching 2 parallel queries that iterate from both ends of the index
 // until the meet in the middle
 //
-export async function queryOptimized<T>({
+export async function queryOptimized<T extends Record<string, any>>({
   queryParams,
   QueryCommand,
   client,
@@ -58,7 +59,7 @@ export async function queryOptimized<T>({
     allItems = allItems.concat(respRight.Items!);
   } while (!isMiddleReached && !areBothQueriesExhausted);
 
-  return uniqBy(allItems, item => JSON.stringify(item));
+  return uniqBy(allItems, item => JSON.stringify(item)).map(item => unmarshall(item) as T);
 }
 
 export async function queryRegular<T extends Record<string, AttributeValue>>({

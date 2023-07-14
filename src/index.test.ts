@@ -52,6 +52,12 @@ it(`should return all elements using optimized find query for 1 MB table`, async
   expect(result).toHaveLength(250);
 });
 
+it(`should return unmarshalled element for 1 MB table`, async () => {
+  const result = await testQueryOptimized('some-hash-key-1mb');
+
+  expect(result[0]).toEqual({hash_key: 'some-hash-key-1mb', range_key: 'some-range-key-3000'});
+});
+
 it(`should return all elements using regular find query for 1 MB table`, async () => {
   const result = await testQueryRegular('some-hash-key-1mb');
 
