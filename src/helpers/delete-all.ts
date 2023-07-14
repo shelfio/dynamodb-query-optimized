@@ -14,7 +14,10 @@ export async function deleteAll(params: ScanCommandInput): Promise<BatchWriteCom
   let resp;
 
   do {
-    const scanCommand = new ScanCommand(params);
+    const scanCommand: ScanCommand = new ScanCommand({
+      ...params,
+      ...(LastEvaluatedKey ? {ExclusiveStartKey: LastEvaluatedKey} : {}),
+    });
 
     resp = await ddb.send(scanCommand);
 
