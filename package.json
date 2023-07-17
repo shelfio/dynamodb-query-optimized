@@ -41,7 +41,7 @@
     "preset": "@shelf/jest-dynamodb"
   },
   "dependencies": {
-    "@shelf/aws-ddb-with-xray": "2.0.2",
+    "@shelf/aws-ddb-with-xray": "2.0.3",
     "lodash": "4.17.21",
     "p-map": "4.0.0"
   },
