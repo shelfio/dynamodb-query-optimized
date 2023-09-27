@@ -54,7 +54,7 @@
     "@shelf/prettier-config": "1.0.0",
     "@shelf/tsconfig": "0.0.11",
     "@types/jest": "28.1.8",
-    "@types/lodash": "4.14.198",
+    "@types/lodash": "4.14.199",
     "@types/node": "16",
     "eslint": "8.49.0",
     "husky": "8.0.3",
