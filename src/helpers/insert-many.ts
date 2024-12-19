@@ -1,8 +1,8 @@
-import type {BatchWriteCommandInput, BatchWriteCommandOutput} from '@aws-sdk/lib-dynamodb';
-import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
 import {BatchWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {chunk} from 'lodash';
 import pMap from 'p-map';
+import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
+import type {BatchWriteCommandInput, BatchWriteCommandOutput} from '@aws-sdk/lib-dynamodb';
 import {ddb} from './ddb';
 
 type InsertManyParams = {

@@ -1,11 +1,11 @@
+import {ScanCommand} from '@aws-sdk/lib-dynamodb';
+import {chunk} from 'lodash';
 import type {
   BatchWriteCommandInput,
   BatchWriteCommandOutput,
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
-import {ScanCommand} from '@aws-sdk/lib-dynamodb';
-import {chunk} from 'lodash';
 import {ddb} from './ddb';
 import {batchWrite} from './insert-many';
 
