@@ -1,12 +1,12 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.0.2
+  node: circleci/node@7.0.0
 
 parameters:
   node_version:
     type: string
-    default: '18.20.5-browsers'
+    default: '22.13.0'
 
 commands:
   install_deps:
