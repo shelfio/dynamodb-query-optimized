@@ -1,5 +1,7 @@
+/* eslint-disable complexity */
 import {isEqual, uniqBy} from 'lodash';
 import {unmarshall} from '@aws-sdk/util-dynamodb';
+import type {NativeAttributeValue} from '@aws-sdk/util-dynamodb';
 import type {AttributeValue, QueryCommandInput, QueryCommandOutput} from '@aws-sdk/client-dynamodb';
 import type {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import type {QueryCommand} from '@aws-sdk/client-dynamodb';
@@ -15,6 +17,7 @@ type QueryOptimizedParams = {
 // It works by launching 2 parallel queries that iterate from both ends of the index
 // until the meet in the middle
 //
+// @deprecated, use queryOptimizedV2 instead
 export async function queryOptimized<T extends Record<string, any>>({
   queryParams,
   QueryCommand,
@@ -60,6 +63,86 @@ export async function queryOptimized<T extends Record<string, any>>({
   } while (!isMiddleReached && !areBothQueriesExhausted);
 
   return uniqBy(allItems, item => JSON.stringify(item)).map(item => unmarshall(item) as T);
+}
+
+function defaultUniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(item: T) {
+  return `${item.hash_key}|${item.range_key}`;
+}
+
+type QueryOptimizedParamsV2<T> = {
+  client: DynamoDBClient;
+  QueryCommand: typeof QueryCommand;
+  queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
+  uniqueIdentifierFn?: (item: T) => string; // function that returns a unique identifier for an item, as an example see defaultUniqueIdentifierFn
+};
+
+export async function queryOptimizedV2<T extends Record<string, NativeAttributeValue>>({
+  queryParams,
+  QueryCommand,
+  uniqueIdentifierFn = defaultUniqueIdentifierFn<T>,
+  client,
+}: QueryOptimizedParamsV2<T>): Promise<T[]> {
+  const map = new Map<string, T>();
+
+  const addItemToMap = (item: Record<string, AttributeValue>) => {
+    const unmarshalledItem = unmarshall(item) as T;
+
+    const key = uniqueIdentifierFn(unmarshalledItem);
+
+    if (!map.has(key)) {
+      map.set(key, unmarshalledItem);
+    } else {
+      isMiddleReached = true;
+    }
+  };
+
+  let isMiddleReached = false;
+  let queryLeftLastEvaluatedKey;
+  let queryRightLastEvaluatedKey;
+  let isSomeQueryExhausted = false;
+
+  const queryParamsWithProjection = queryParams;
+
+  if (uniqueIdentifierFn === defaultUniqueIdentifierFn && queryParams.ProjectionExpression) {
+    if (!queryParams.ProjectionExpression?.includes('hash_key')) {
+      queryParamsWithProjection.ProjectionExpression += ', hash_key';
+    }
+
+    if (!queryParams.ProjectionExpression?.includes('range_key')) {
+      queryParamsWithProjection.ProjectionExpression += ', range_key';
+    }
+  }
+
+  do {
+    const responses = await Promise.all([
+      executeLeftQuery(
+        {client, queryParams: queryParamsWithProjection, QueryCommand},
+        queryLeftLastEvaluatedKey
+      ),
+      executeRightQuery(
+        {client, queryParams: queryParamsWithProjection, QueryCommand},
+        queryRightLastEvaluatedKey
+      ),
+    ]);
+
+    const [respLeft, respRight] = responses as any;
+
+    queryLeftLastEvaluatedKey = respLeft.LastEvaluatedKey;
+    queryRightLastEvaluatedKey = respRight.LastEvaluatedKey;
+
+    for (const item of respLeft.Items ?? []) {
+      addItemToMap(item);
+    }
+
+    for (const item of respRight.Items ?? []) {
+      addItemToMap(item);
+    }
+
+    // If any query don't have a cursor to fetch the next item - stop iterating (means at least that query processed all items)
+    isSomeQueryExhausted = !queryLeftLastEvaluatedKey || !queryRightLastEvaluatedKey;
+  } while (!isMiddleReached && !isSomeQueryExhausted);
+
+  return Array.from(map.values());
 }
 
 export async function queryRegular<T extends Record<string, AttributeValue>>({
