@@ -65,29 +65,43 @@ export async function queryOptimized<T extends Record<string, any>>({
   return uniqBy(allItems, item => JSON.stringify(item)).map(item => unmarshall(item) as T);
 }
 
-function defaultUniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(item: T) {
-  return `${item.hash_key}|${item.range_key}`;
+type UniqueIdentifierAttributes<T> = {
+  primaryKey: keyof T;
+  sortKey: keyof T;
+};
+
+function uniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(
+  item: T,
+  {primaryKey, sortKey}: UniqueIdentifierAttributes<T>
+) {
+  return `${String(item[primaryKey])}|${String(item[sortKey])}`;
 }
 
 type QueryOptimizedParamsV2<T> = {
   client: DynamoDBClient;
   QueryCommand: typeof QueryCommand;
   queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
-  uniqueIdentifierFn?: (item: T) => string; // function that returns a unique identifier for an item, as an example see defaultUniqueIdentifierFn
+  uniqueIdentifierAttributes?: UniqueIdentifierAttributes<T>; // preferred attribute names for the default identifier
 };
 
 export async function queryOptimizedV2<T extends Record<string, NativeAttributeValue>>({
   queryParams,
   QueryCommand,
-  uniqueIdentifierFn = defaultUniqueIdentifierFn<T>,
+  uniqueIdentifierAttributes,
   client,
 }: QueryOptimizedParamsV2<T>): Promise<T[]> {
+  const defaultAttributes: UniqueIdentifierAttributes<T> = {
+    primaryKey: 'hash_key',
+    sortKey: 'range_key',
+  };
+  const identifierAttributes = uniqueIdentifierAttributes ?? defaultAttributes;
+
   const map = new Map<string, T>();
 
   const addItemToMap = (item: Record<string, AttributeValue>) => {
     const unmarshalledItem = unmarshall(item) as T;
 
-    const key = uniqueIdentifierFn(unmarshalledItem);
+    const key = uniqueIdentifierFn(unmarshalledItem, identifierAttributes);
 
     if (!map.has(key)) {
       map.set(key, unmarshalledItem);
@@ -103,14 +117,16 @@ export async function queryOptimizedV2<T extends Record<string, NativeAttributeV
 
   const queryParamsWithProjection = queryParams;
 
-  if (uniqueIdentifierFn === defaultUniqueIdentifierFn && queryParams.ProjectionExpression) {
-    if (!queryParams.ProjectionExpression?.includes('hash_key')) {
-      queryParamsWithProjection.ProjectionExpression += ', hash_key';
-    }
+  if (queryParams.ProjectionExpression) {
+    const projectionAttributes = queryParams.ProjectionExpression.split(',').map(attribute =>
+      attribute.trim()
+    );
+    const projectionSet = new Set(projectionAttributes.filter(Boolean));
 
-    if (!queryParams.ProjectionExpression?.includes('range_key')) {
-      queryParamsWithProjection.ProjectionExpression += ', range_key';
-    }
+    projectionSet.add(identifierAttributes.primaryKey.toString());
+    projectionSet.add(identifierAttributes.sortKey.toString());
+
+    queryParamsWithProjection.ProjectionExpression = Array.from(projectionSet).join(', ');
   }
 
   do {
