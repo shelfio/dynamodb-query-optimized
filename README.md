@@ -22,20 +22,58 @@ Optimized query: ~21 MB of items: 4.988s # almost 2x faster
 
 ## Usage
 
-For now, it supports `aws-sdk` v2. Feel free to submit a PR to support `aws-sdk` v3!
+The library targets the modular `@aws-sdk/client-dynamodb` v3 package. `queryOptimizedV2` is the recommended entry point; the original `queryOptimized` export remains available for backwards compatibility.
 
-### Optimized query for 2+ MB of data
+### queryOptimizedV2 (recommended for 2+ MB of data)
+
+Launches two parallel `QueryCommand` calls (forward and reverse) and stops when both sides meet in the middle, deduplicating items on the fly. Specify `uniqueIdentifierAttributes` if your table uses primary and sort key names different from the defaults `hash_key` and `range_key`.
+
+```js
+import {queryOptimizedV2} from '@shelf/dynamodb-query-optimized';
+import {DynamoDBClient, QueryCommand} from '@aws-sdk/client-dynamodb';
+
+const client = new DynamoDBClient({region: 'us-east-1'});
+
+const results = await queryOptimizedV2({
+  client,
+  QueryCommand,
+  queryParams: {
+    TableName: 'example_table',
+    KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
+    ExpressionAttributeNames: {
+      '#pk': 'pk',
+      '#sk': 'sk',
+    },
+    ExpressionAttributeValues: {
+      ':pk': {S: 'foo'},
+      ':sk': {S: 'bar'},
+    },
+  },
+  uniqueIdentifierAttributes: {
+    primaryKey: 'pk',
+    sortKey: 'sk',
+  },
+});
+
+console.log(results);
+/*
+  [{pk: 'foo', sk: 'bar'}, {pk: 'foo', sk: 'baz'}]
+ */
+```
+
+### Legacy optimized query for 2+ MB of data
 
 Queries DDB from both ends of the query in parallel. Stops and returns results when the middle is reached.
 
 ```js
 import {queryOptimized} from '@shelf/dynamodb-query-optimized';
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import {DynamoDBClient, QueryCommand} from '@aws-sdk/client-dynamodb';
 
-const ddb = new DynamoDB.DocumentClient({region: 'us-east-1'});
+const client = new DynamoDBClient({region: 'us-east-1'});
 
 const results = await queryOptimized({
-  queryFunction: ddb.query.bind(ddb),
+  client,
+  QueryCommand,
   queryParams: {
     TableName: 'example_table',
     ProjectionExpression: 'hash_key, range_key',
@@ -45,8 +83,8 @@ const results = await queryOptimized({
       '#range_key': 'range_key',
     },
     ExpressionAttributeValues: {
-      ':hash_key': hash_key,
-      ':range_key': range_key,
+      ':hash_key': {S: 'foo'},
+      ':range_key': {S: 'bar'},
     },
   },
 });
@@ -63,12 +101,13 @@ Queries DDB and continues to paginate through all results until query is exhaust
 
 ```js
 import {queryRegular} from '@shelf/dynamodb-query-optimized';
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import {DynamoDBClient, QueryCommand} from '@aws-sdk/client-dynamodb';
 
-const ddb = new DynamoDB.DocumentClient({region: 'us-east-1'});
+const client = new DynamoDBClient({region: 'us-east-1'});
 
 const results = await queryRegular({
-  queryFunction: ddb.query.bind(ddb),
+  client,
+  QueryCommand,
   queryParams: {
     TableName: 'example_table',
     ProjectionExpression: 'hash_key, range_key',
@@ -78,8 +117,8 @@ const results = await queryRegular({
       '#range_key': 'range_key',
     },
     ExpressionAttributeValues: {
-      ':hash_key': hash_key,
-      ':range_key': range_key,
+      ':hash_key': {S: 'foo'},
+      ':range_key': {S: 'bar'},
     },
   },
 });
