@@ -5,7 +5,7 @@ import type {QueryCommandInput} from '@aws-sdk/client-dynamodb';
 import {insertMany} from './helpers/insert-many';
 import {deleteMany} from './helpers/delete-all';
 import {ddb} from './helpers/ddb';
-import {queryOptimizedV2, queryRegular} from '.';
+import {queryOptimized, queryRegular} from '.';
 
 const TABLE_NAME = 'example_table';
 const LARGE_DATA_HASH_KEY = 'perf-hash-large';
@@ -28,14 +28,12 @@ afterAll(async () => {
 });
 
 describe('query performance', () => {
-  it('queryOptimizedV2 resolves 2x faster for multi-page workloads', async () => {
+  it('queryOptimized resolves 2x faster for multi-page workloads', async () => {
     const queryParams = makeQueryParams(LARGE_DATA_HASH_KEY);
 
     const regular = await measure(() => queryRegular({client: ddb, QueryCommand, queryParams}));
 
-    const optimized = await measure(() =>
-      queryOptimizedV2({client: ddb, QueryCommand, queryParams})
-    );
+    const optimized = await measure(() => queryOptimized({client: ddb, QueryCommand, queryParams}));
 
     expect(regular.result).toHaveLength(10000);
     expect(optimized.result).toHaveLength(10000);
@@ -45,14 +43,12 @@ describe('query performance', () => {
     expect(optimized.duration).toBeLessThanOrEqual(regular.duration / 2);
   });
 
-  it('queryOptimizedV2 ~2x faster for single-page workloads', async () => {
+  it('queryOptimized ~2x faster for single-page workloads', async () => {
     const queryParams = makeQueryParams(SMALL_DATA_HASH_KEY);
 
     const regular = await measure(() => queryRegular({client: ddb, QueryCommand, queryParams}));
 
-    const optimized = await measure(() =>
-      queryOptimizedV2({client: ddb, QueryCommand, queryParams})
-    );
+    const optimized = await measure(() => queryOptimized({client: ddb, QueryCommand, queryParams}));
 
     expect(regular.result).toHaveLength(20);
     expect(optimized.result).toHaveLength(20);

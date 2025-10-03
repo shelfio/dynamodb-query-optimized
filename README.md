@@ -22,19 +22,19 @@ Optimized query: ~21 MB of items: 4.988s # almost 2x faster
 
 ## Usage
 
-The library targets the modular `@aws-sdk/client-dynamodb` v3 package. `queryOptimizedV2` is the recommended entry point; the original `queryOptimized` export remains available for backwards compatibility.
+The library targets the modular `@aws-sdk/client-dynamodb` v3 package. `queryOptimized` is the recommended entry point; the original implementation now ships as `queryOptimizedV1` for backwards compatibility.
 
-### queryOptimizedV2 (recommended for 2+ MB of data)
+### queryOptimized (recommended for 2+ MB of data)
 
 Launches two parallel `QueryCommand` calls (forward and reverse) and stops when both sides meet in the middle, deduplicating items on the fly. Specify `uniqueIdentifierAttributes` if your table uses primary and sort key names different from the defaults `hash_key` and `range_key`.
 
 ```js
-import {queryOptimizedV2} from '@shelf/dynamodb-query-optimized';
+import {queryOptimized} from '@shelf/dynamodb-query-optimized';
 import {DynamoDBClient, QueryCommand} from '@aws-sdk/client-dynamodb';
 
 const client = new DynamoDBClient({region: 'us-east-1'});
 
-const results = await queryOptimizedV2({
+const results = await queryOptimized({
   client,
   QueryCommand,
   queryParams: {
@@ -61,17 +61,17 @@ console.log(results);
  */
 ```
 
-### Legacy optimized query for 2+ MB of data
+### queryOptimizedV1 (legacy signature)
 
 Queries DDB from both ends of the query in parallel. Stops and returns results when the middle is reached.
 
 ```js
-import {queryOptimized} from '@shelf/dynamodb-query-optimized';
+import {queryOptimizedV1} from '@shelf/dynamodb-query-optimized';
 import {DynamoDBClient, QueryCommand} from '@aws-sdk/client-dynamodb';
 
 const client = new DynamoDBClient({region: 'us-east-1'});
 
-const results = await queryOptimized({
+const results = await queryOptimizedV1({
   client,
   QueryCommand,
   queryParams: {

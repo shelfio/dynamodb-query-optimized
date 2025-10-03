@@ -6,7 +6,7 @@ import type {AttributeValue, QueryCommandInput, QueryCommandOutput} from '@aws-s
 import type {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import type {QueryCommand} from '@aws-sdk/client-dynamodb';
 
-type QueryOptimizedParams = {
+type BaseQueryParams = {
   client: DynamoDBClient;
   QueryCommand: typeof QueryCommand;
   queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
@@ -17,12 +17,12 @@ type QueryOptimizedParams = {
 // It works by launching 2 parallel queries that iterate from both ends of the index
 // until the meet in the middle
 //
-// @deprecated, use queryOptimizedV2 instead
-export async function queryOptimized<T extends Record<string, any>>({
+// @deprecated, use queryOptimized instead
+export async function queryOptimizedV1<T extends Record<string, any>>({
   queryParams,
   QueryCommand,
   client,
-}: QueryOptimizedParams): Promise<T[]> {
+}: BaseQueryParams): Promise<T[]> {
   let allItems: T[] = [];
   let allItemsFromLeftQuery: T[] = [];
   let allItemsFromRightQuery: T[] = [];
@@ -90,19 +90,19 @@ function uniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(
   return `${primaryIdentifier}|${sortKeyStr}:${item[sortKey]}`;
 }
 
-type QueryOptimizedParamsV2<T> = {
+type QueryOptimizedParams<T> = {
   client: DynamoDBClient;
   QueryCommand: typeof QueryCommand;
   queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
   uniqueIdentifierAttributes?: UniqueIdentifierAttributes<T>; // preferred attribute names for the default identifier
 };
 
-export async function queryOptimizedV2<T extends Record<string, NativeAttributeValue>>({
+export async function queryOptimized<T extends Record<string, NativeAttributeValue>>({
   queryParams,
   QueryCommand,
   uniqueIdentifierAttributes,
   client,
-}: QueryOptimizedParamsV2<T>): Promise<T[]> {
+}: QueryOptimizedParams<T>): Promise<T[]> {
   const defaultAttributes: UniqueIdentifierAttributes<T> = {
     primaryKey: 'hash_key',
     sortKey: 'range_key',
@@ -185,7 +185,7 @@ export async function queryRegular<T extends Record<string, AttributeValue>>({
   client,
   queryParams,
   QueryCommand,
-}: QueryOptimizedParams): Promise<T[]> {
+}: BaseQueryParams): Promise<T[]> {
   let allItems: T[] = [];
   let lastEvaluatedKey;
 
@@ -210,7 +210,7 @@ export async function queryRegular<T extends Record<string, AttributeValue>>({
 }
 
 function executeLeftQuery(
-  {client, queryParams, QueryCommand}: QueryOptimizedParams,
+  {client, queryParams, QueryCommand}: BaseQueryParams,
   key?: any
 ): Promise<QueryCommandOutput> {
   return client.send(
@@ -223,7 +223,7 @@ function executeLeftQuery(
 }
 
 function executeRightQuery(
-  {client, queryParams, QueryCommand}: QueryOptimizedParams,
+  {client, queryParams, QueryCommand}: BaseQueryParams,
   key?: any
 ): Promise<QueryCommandOutput> {
   return client.send(
