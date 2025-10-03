@@ -67,7 +67,7 @@ export async function queryOptimized<T extends Record<string, any>>({
 
 type UniqueIdentifierAttributes<T> = {
   primaryKey: keyof T;
-  sortKey: keyof T;
+  sortKey?: keyof T;
 };
 
 function uniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(
@@ -78,10 +78,16 @@ function uniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(
     sortKeyStr,
   }: {
     primaryKeyStr: string;
-    sortKeyStr: string;
+    sortKeyStr?: string;
   }
 ) {
-  return `${primaryKeyStr}:${item[primaryKey]}|${sortKeyStr}:${item[sortKey]}`;
+  const primaryIdentifier = `${primaryKeyStr}:${item[primaryKey]}`;
+
+  if (!sortKey || !sortKeyStr) {
+    return primaryIdentifier;
+  }
+
+  return `${primaryIdentifier}|${sortKeyStr}:${item[sortKey]}`;
 }
 
 type QueryOptimizedParamsV2<T> = {
@@ -104,7 +110,7 @@ export async function queryOptimizedV2<T extends Record<string, NativeAttributeV
   const identifierAttributes = uniqueIdentifierAttributes ?? defaultAttributes;
   const stringifiedAttributes = {
     primaryKeyStr: String(identifierAttributes.primaryKey),
-    sortKeyStr: String(identifierAttributes.sortKey),
+    sortKeyStr: identifierAttributes.sortKey ? String(identifierAttributes.sortKey) : undefined,
   };
 
   const map = new Map<string, T>();
@@ -135,7 +141,10 @@ export async function queryOptimizedV2<T extends Record<string, NativeAttributeV
     const projectionSet = new Set(projectionAttributes.filter(Boolean));
 
     projectionSet.add(identifierAttributes.primaryKey.toString());
-    projectionSet.add(identifierAttributes.sortKey.toString());
+
+    if (identifierAttributes.sortKey) {
+      projectionSet.add(identifierAttributes.sortKey.toString());
+    }
 
     queryParamsWithProjection.ProjectionExpression = Array.from(projectionSet).join(', ');
   }

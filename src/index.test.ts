@@ -32,6 +32,11 @@ beforeAll(async () => {
     TableName: 'example_table',
     Items: listToInsert,
   });
+
+  await insertMany({
+    TableName: 'hash_only_table',
+    Items: [{hash_key: 'hash-only-1'}],
+  });
 });
 
 describe('queryOptimized', () => {
@@ -96,12 +101,23 @@ describe('queryOptimizedV2', () => {
 
     expect(result).toHaveLength(250);
   });
+
+  it('should handle tables without sort key', async () => {
+    const result = await testQueryOptimizedV2HashOnly('hash-only-1');
+
+    expect(result).toEqual([{hash_key: 'hash-only-1'}]);
+  });
 });
 
 afterAll(async () => {
   await deleteAll({
     TableName: 'example_table',
     ProjectionExpression: 'hash_key, range_key',
+  });
+
+  await deleteAll({
+    TableName: 'hash_only_table',
+    ProjectionExpression: 'hash_key',
   });
 });
 
@@ -160,6 +176,27 @@ function testQueryOptimizedV2(hash_key: string) {
       ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
+      }),
+    },
+  });
+}
+
+function testQueryOptimizedV2HashOnly(hash_key: string) {
+  return queryOptimizedV2({
+    QueryCommand: QueryCommand,
+    client: ddb,
+    uniqueIdentifierAttributes: {
+      primaryKey: 'hash_key',
+    },
+    queryParams: {
+      TableName: 'hash_only_table',
+      ProjectionExpression: 'hash_key',
+      KeyConditionExpression: '#hash_key = :hash_key',
+      ExpressionAttributeNames: {
+        '#hash_key': 'hash_key',
+      },
+      ExpressionAttributeValues: marshall({
+        ':hash_key': hash_key,
       }),
     },
   });
