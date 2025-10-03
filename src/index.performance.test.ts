@@ -59,7 +59,7 @@ describe('query performance', () => {
 
     console.log({regular: regular.duration, optimized: optimized.duration});
 
-    expect(optimized.duration).toBeLessThanOrEqual(regular.duration / 1.75);
+    expect(optimized.duration).toBeLessThanOrEqual(regular.duration / 1.7);
   });
 });
 

@@ -72,9 +72,16 @@ type UniqueIdentifierAttributes<T> = {
 
 function uniqueIdentifierFn<T extends Record<string, NativeAttributeValue>>(
   item: T,
-  {primaryKey, sortKey}: UniqueIdentifierAttributes<T>
+  {primaryKey, sortKey}: UniqueIdentifierAttributes<T>,
+  {
+    primaryKeyStr,
+    sortKeyStr,
+  }: {
+    primaryKeyStr: string;
+    sortKeyStr: string;
+  }
 ) {
-  return `${String(item[primaryKey])}|${String(item[sortKey])}`;
+  return `${primaryKeyStr}:${item[primaryKey]}|${sortKeyStr}:${item[sortKey]}`;
 }
 
 type QueryOptimizedParamsV2<T> = {
@@ -95,13 +102,17 @@ export async function queryOptimizedV2<T extends Record<string, NativeAttributeV
     sortKey: 'range_key',
   };
   const identifierAttributes = uniqueIdentifierAttributes ?? defaultAttributes;
+  const stringifiedAttributes = {
+    primaryKeyStr: String(identifierAttributes.primaryKey),
+    sortKeyStr: String(identifierAttributes.sortKey),
+  };
 
   const map = new Map<string, T>();
 
   const addItemToMap = (item: Record<string, AttributeValue>) => {
     const unmarshalledItem = unmarshall(item) as T;
 
-    const key = uniqueIdentifierFn(unmarshalledItem, identifierAttributes);
+    const key = uniqueIdentifierFn(unmarshalledItem, identifierAttributes, stringifiedAttributes);
 
     if (!map.has(key)) {
       map.set(key, unmarshalledItem);
