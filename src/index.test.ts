@@ -178,6 +178,7 @@ function testQueryOptimized(hash_key: string) {
         ':range_key': range_key,
       }),
     },
+    uniqueIdentifierAttributes: {primaryKey: 'hash_key', sortKey: 'range_key'},
   });
 }
 

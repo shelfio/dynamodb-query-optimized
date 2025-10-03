@@ -94,7 +94,9 @@ type QueryOptimizedParams<T> = {
   client: DynamoDBClient;
   QueryCommand: typeof QueryCommand;
   queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
-  uniqueIdentifierAttributes?: UniqueIdentifierAttributes<T>; // preferred attribute names for the default identifier
+  // uniqueIdentifierAttributes is used to specify the attribute names for the primary and sort keys
+  // combined they must uniquely identify an item in the table
+  uniqueIdentifierAttributes: UniqueIdentifierAttributes<T>;
 };
 
 export async function queryOptimized<T extends Record<string, NativeAttributeValue>>({
@@ -103,11 +105,7 @@ export async function queryOptimized<T extends Record<string, NativeAttributeVal
   uniqueIdentifierAttributes,
   client,
 }: QueryOptimizedParams<T>): Promise<T[]> {
-  const defaultAttributes: UniqueIdentifierAttributes<T> = {
-    primaryKey: 'hash_key',
-    sortKey: 'range_key',
-  };
-  const identifierAttributes = uniqueIdentifierAttributes ?? defaultAttributes;
+  const identifierAttributes = uniqueIdentifierAttributes;
   const stringifiedAttributes = {
     primaryKeyStr: String(identifierAttributes.primaryKey),
     sortKeyStr: identifierAttributes.sortKey ? String(identifierAttributes.sortKey) : undefined,

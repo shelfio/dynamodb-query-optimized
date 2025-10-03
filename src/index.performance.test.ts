@@ -33,7 +33,14 @@ describe('query performance', () => {
 
     const regular = await measure(() => queryRegular({client: ddb, QueryCommand, queryParams}));
 
-    const optimized = await measure(() => queryOptimized({client: ddb, QueryCommand, queryParams}));
+    const optimized = await measure(() =>
+      queryOptimized({
+        client: ddb,
+        QueryCommand,
+        queryParams,
+        uniqueIdentifierAttributes: {primaryKey: 'hash_key', sortKey: 'range_key'},
+      })
+    );
 
     expect(regular.result).toHaveLength(10000);
     expect(optimized.result).toHaveLength(10000);
@@ -48,7 +55,14 @@ describe('query performance', () => {
 
     const regular = await measure(() => queryRegular({client: ddb, QueryCommand, queryParams}));
 
-    const optimized = await measure(() => queryOptimized({client: ddb, QueryCommand, queryParams}));
+    const optimized = await measure(() =>
+      queryOptimized({
+        client: ddb,
+        QueryCommand,
+        queryParams,
+        uniqueIdentifierAttributes: {primaryKey: 'hash_key', sortKey: 'range_key'},
+      })
+    );
 
     expect(regular.result).toHaveLength(20);
     expect(optimized.result).toHaveLength(20);
