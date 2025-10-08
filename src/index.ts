@@ -96,6 +96,7 @@ type QueryOptimizedParams<T> = {
   queryParams: Omit<QueryCommandInput, 'ScanIndexForward' | 'ExclusiveStartKey'>;
   // uniqueIdentifierAttributes is used to specify the attribute names for the primary and sort keys
   // combined they must uniquely identify an item in the table
+  // those attributes must be included in the ProjectionExpression of the queryParams
   uniqueIdentifierAttributes: UniqueIdentifierAttributes<T>;
 };
 
@@ -130,33 +131,10 @@ export async function queryOptimized<T extends Record<string, NativeAttributeVal
   let queryRightLastEvaluatedKey;
   let isSomeQueryExhausted = false;
 
-  const queryParamsWithProjection = queryParams;
-
-  if (queryParams.ProjectionExpression) {
-    const projectionAttributes = queryParams.ProjectionExpression.split(',').map(attribute =>
-      attribute.trim()
-    );
-    const projectionSet = new Set(projectionAttributes.filter(Boolean));
-
-    projectionSet.add(identifierAttributes.primaryKey.toString());
-
-    if (identifierAttributes.sortKey) {
-      projectionSet.add(identifierAttributes.sortKey.toString());
-    }
-
-    queryParamsWithProjection.ProjectionExpression = Array.from(projectionSet).join(', ');
-  }
-
   do {
     const responses = await Promise.all([
-      executeLeftQuery(
-        {client, queryParams: queryParamsWithProjection, QueryCommand},
-        queryLeftLastEvaluatedKey
-      ),
-      executeRightQuery(
-        {client, queryParams: queryParamsWithProjection, QueryCommand},
-        queryRightLastEvaluatedKey
-      ),
+      executeLeftQuery({client, queryParams, QueryCommand}, queryLeftLastEvaluatedKey),
+      executeRightQuery({client, queryParams, QueryCommand}, queryRightLastEvaluatedKey),
     ]);
 
     const [respLeft, respRight] = responses as any;
