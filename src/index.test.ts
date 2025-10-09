@@ -3,7 +3,7 @@ import {QueryCommand} from '@aws-sdk/client-dynamodb';
 import {insertMany} from './helpers/insert-many';
 import {deleteAll} from './helpers/delete-all';
 import {ddb} from './helpers/ddb';
-import {queryOptimized, queryRegular} from './';
+import {queryOptimized, queryOptimizedV1, queryRegular} from './';
 
 const hash_key = 'some-hash-key';
 const range_key = 'some-range-key';
@@ -32,36 +32,81 @@ beforeAll(async () => {
     TableName: 'example_table',
     Items: listToInsert,
   });
+
+  await insertMany({
+    TableName: 'hash_only_table',
+    Items: [{hash_key: 'hash-only-1'}],
+  });
 });
 
-it(`should return all elements using optimized find query for 10 MB table`, async () => {
-  const result = await testQueryOptimized('some-hash-key');
+describe('queryOptimizedV1', () => {
+  it(`should return all elements using optimized find query for 10 MB table`, async () => {
+    const result = await testQueryOptimizedV1('some-hash-key');
 
-  expect(result).toHaveLength(3000);
+    expect(result).toHaveLength(3000);
+  });
+
+  it(`should return all elements using regular find query for 10 MB table`, async () => {
+    const result = await testQueryRegular('some-hash-key');
+
+    expect(result).toHaveLength(3000);
+  });
+
+  it(`should return all elements using optimized find query for 1 MB table`, async () => {
+    const result = await testQueryOptimizedV1('some-hash-key-1mb');
+
+    expect(result).toHaveLength(250);
+  });
+
+  it(`should return unmarshalled element for 1 MB table`, async () => {
+    const result = await testQueryOptimizedV1('some-hash-key-1mb');
+
+    expect(result[0]).toEqual({hash_key: 'some-hash-key-1mb', range_key: 'some-range-key-3000'});
+  });
+
+  it(`should return all elements using regular find query for 1 MB table`, async () => {
+    const result = await testQueryRegular('some-hash-key-1mb');
+
+    expect(result).toHaveLength(250);
+  });
 });
 
-it(`should return all elements using regular find query for 10 MB table`, async () => {
-  const result = await testQueryRegular('some-hash-key');
+describe('queryOptimized', () => {
+  it(`should return all elements using optimized find query for 10 MB table`, async () => {
+    const result = await testQueryOptimized('some-hash-key');
 
-  expect(result).toHaveLength(3000);
-});
+    expect(result).toHaveLength(3000);
+  });
 
-it(`should return all elements using optimized find query for 1 MB table`, async () => {
-  const result = await testQueryOptimized('some-hash-key-1mb');
+  it(`should return all elements using regular find query for 10 MB table`, async () => {
+    const result = await testQueryRegular('some-hash-key');
 
-  expect(result).toHaveLength(250);
-});
+    expect(result).toHaveLength(3000);
+  });
 
-it(`should return unmarshalled element for 1 MB table`, async () => {
-  const result = await testQueryOptimized('some-hash-key-1mb');
+  it(`should return all elements using optimized find query for 1 MB table`, async () => {
+    const result = await testQueryOptimized('some-hash-key-1mb');
 
-  expect(result[0]).toEqual({hash_key: 'some-hash-key-1mb', range_key: 'some-range-key-3000'});
-});
+    expect(result).toHaveLength(250);
+  });
 
-it(`should return all elements using regular find query for 1 MB table`, async () => {
-  const result = await testQueryRegular('some-hash-key-1mb');
+  it(`should return unmarshalled element for 1 MB table`, async () => {
+    const result = await testQueryOptimized('some-hash-key-1mb');
 
-  expect(result).toHaveLength(250);
+    expect(result[0]).toEqual({hash_key: 'some-hash-key-1mb', range_key: 'some-range-key-3000'});
+  });
+
+  it(`should return all elements using regular find query for 1 MB table`, async () => {
+    const result = await testQueryRegular('some-hash-key-1mb');
+
+    expect(result).toHaveLength(250);
+  });
+
+  it('should handle tables without sort key', async () => {
+    const result = await testQueryOptimizedHashOnly('hash-only-1');
+
+    expect(result).toEqual([{hash_key: 'hash-only-1'}]);
+  });
 });
 
 afterAll(async () => {
@@ -69,10 +114,35 @@ afterAll(async () => {
     TableName: 'example_table',
     ProjectionExpression: 'hash_key, range_key',
   });
+
+  await deleteAll({
+    TableName: 'hash_only_table',
+    ProjectionExpression: 'hash_key',
+  });
 });
 
 function testQueryRegular(hash_key: string) {
   return queryRegular({
+    QueryCommand: QueryCommand,
+    client: ddb,
+    queryParams: {
+      TableName: 'example_table',
+      ProjectionExpression: 'hash_key, range_key',
+      KeyConditionExpression: '#hash_key = :hash_key AND begins_with(#range_key, :range_key)',
+      ExpressionAttributeNames: {
+        '#hash_key': 'hash_key',
+        '#range_key': 'range_key',
+      },
+      ExpressionAttributeValues: marshall({
+        ':hash_key': hash_key,
+        ':range_key': range_key,
+      }),
+    },
+  });
+}
+
+function testQueryOptimizedV1(hash_key: string) {
+  return queryOptimizedV1({
     QueryCommand: QueryCommand,
     client: ddb,
     queryParams: {
@@ -106,6 +176,28 @@ function testQueryOptimized(hash_key: string) {
       ExpressionAttributeValues: marshall({
         ':hash_key': hash_key,
         ':range_key': range_key,
+      }),
+    },
+    uniqueIdentifierAttributes: {primaryKey: 'hash_key', sortKey: 'range_key'},
+  });
+}
+
+function testQueryOptimizedHashOnly(hash_key: string) {
+  return queryOptimized({
+    QueryCommand: QueryCommand,
+    client: ddb,
+    uniqueIdentifierAttributes: {
+      primaryKey: 'hash_key',
+    },
+    queryParams: {
+      TableName: 'hash_only_table',
+      ProjectionExpression: 'hash_key',
+      KeyConditionExpression: '#hash_key = :hash_key',
+      ExpressionAttributeNames: {
+        '#hash_key': 'hash_key',
+      },
+      ExpressionAttributeValues: marshall({
+        ':hash_key': hash_key,
       }),
     },
   });
