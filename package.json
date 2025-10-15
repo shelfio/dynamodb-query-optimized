@@ -1,6 +1,6 @@
 {
   "name": "@shelf/dynamodb-query-optimized",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "2x faster DynamoDB queries when you need to query 2+ MB of data",
   "license": "MIT",
   "author": {
