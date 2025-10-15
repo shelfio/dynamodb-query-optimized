@@ -24,7 +24,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await deleteMany({TableName: TABLE_NAME, Keys: insertedKeys});
+  await deleteMany({TableName: TABLE_NAME, Keys: insertedKeys as any});
 });
 
 describe('query performance', () => {
