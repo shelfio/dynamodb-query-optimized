@@ -1,5 +1,5 @@
 import {BatchWriteCommand} from '@aws-sdk/lib-dynamodb';
-import {chunk} from 'lodash';
+import {chunk} from 'lodash-es';
 import pMap from 'p-map';
 import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
 import type {BatchWriteCommandInput, BatchWriteCommandOutput} from '@aws-sdk/lib-dynamodb';

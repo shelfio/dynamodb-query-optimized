@@ -1,5 +1,5 @@
 /* eslint-disable complexity */
-import {isEqual, uniqBy} from 'lodash';
+import {isEqual, uniqBy} from 'lodash-es';
 import {unmarshall} from '@aws-sdk/util-dynamodb';
 import type {NativeAttributeValue} from '@aws-sdk/util-dynamodb';
 import type {AttributeValue, QueryCommandInput, QueryCommandOutput} from '@aws-sdk/client-dynamodb';

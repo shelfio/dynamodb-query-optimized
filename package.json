@@ -9,6 +9,7 @@
     "url": "https://shelf.io"
   },
   "main": "lib",
+  "type": "module",
   "types": "lib/index.d.ts",
   "files": [
     "lib"
@@ -37,12 +38,9 @@
     "extends": "@shelf/babel-config/backend"
   },
   "prettier": "@shelf/prettier-config",
-  "jest": {
-    "preset": "@shelf/jest-dynamodb"
-  },
   "dependencies": {
     "@shelf/aws-ddb-with-xray": "2.1.0",
-    "lodash": "4.17.23",
+    "lodash-es": "^4.17.23",
     "p-map": "4.0.0"
   },
   "devDependencies": {
@@ -54,7 +52,7 @@
     "@shelf/prettier-config": "1.0.0",
     "@shelf/tsconfig": "0.0.11",
     "@types/jest": "28.1.8",
-    "@types/lodash": "4.17.15",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "22",
     "eslint": "9.21.0",
     "husky": "8.0.3",

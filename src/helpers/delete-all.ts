@@ -1,5 +1,5 @@
 import {ScanCommand} from '@aws-sdk/lib-dynamodb';
-import {chunk} from 'lodash';
+import {chunk} from 'lodash-es';
 import type {
   BatchWriteCommandInput,
   BatchWriteCommandOutput,
