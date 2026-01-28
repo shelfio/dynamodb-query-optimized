@@ -1,17 +1,8 @@
 {
   "extends": "@shelf/tsconfig/backend",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "lib",
-    "rootDir": "src",
-    "declaration": true,
-    "emitDeclarationOnly": false,
-    "isolatedModules": false,
-    "verbatimModuleSyntax": false,
-    "skipLibCheck": true
+    "strict": true
   },
-  "exclude": ["node_modules", "src/**/*.test.ts"],
+  "exclude": ["node_modules"],
   "include": ["src"]
 }
