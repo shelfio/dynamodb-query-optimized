@@ -133,6 +133,7 @@ console.log(results);
 
 ```sh
 $ git checkout master
+$ yarn build
 $ yarn version
 $ yarn publish
 $ git push origin master --tags
