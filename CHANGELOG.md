@@ -1,5 +1,9 @@
 # Breaking Changes
 
+## 4.1.0
+- Switch to lodash-es
+- Setup ESM build
+
 ## 4.0.0
 
 - Rebuilt `queryOptimized` for the modular `@aws-sdk/client-dynamodb` v3 API; supply a `DynamoDBClient`, `QueryCommand`, and `uniqueIdentifierAttributes` so results dedupe on your table's primary/sort keys.
