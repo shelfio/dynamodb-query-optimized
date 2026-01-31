@@ -47,7 +47,7 @@
   "devDependencies": {
     "@babel/cli": "7.28.6",
     "@babel/core": "7.28.6",
-    "@shelf/babel-config": "1.0.2",
+    "@shelf/babel-config": "1.2.0",
     "@shelf/eslint-config": "4.2.1",
     "@shelf/jest-dynamodb": "3.4.1",
     "@shelf/prettier-config": "1.0.0",
