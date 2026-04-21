@@ -2,10 +2,10 @@ import {performance} from 'node:perf_hooks';
 import {marshall} from '@aws-sdk/util-dynamodb';
 import {QueryCommand} from '@aws-sdk/client-dynamodb';
 import type {QueryCommandInput} from '@aws-sdk/client-dynamodb';
-import {insertMany} from './helpers/insert-many';
-import {deleteMany} from './helpers/delete-all';
-import {ddb} from './helpers/ddb';
-import {queryOptimized, queryRegular} from '.';
+import {insertMany} from './helpers/insert-many.js';
+import {deleteMany} from './helpers/delete-all.js';
+import {ddb} from './helpers/ddb.js';
+import {queryOptimized, queryRegular} from './index.js';
 
 const TABLE_NAME = 'example_table';
 const LARGE_DATA_HASH_KEY = 'perf-hash-large';
