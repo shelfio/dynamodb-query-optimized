@@ -1,6 +1,7 @@
 # Breaking Changes
 
 ## 4.1.0
+
 - Switch to lodash-es
 - Setup ESM build
 

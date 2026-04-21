@@ -7,7 +7,7 @@ Read the blog post article explaining how it works: https://vladholubiev.medium.
 ## Install
 
 ```
-$ yarn add @shelf/dynamodb-query-optimized
+$ pnpm add @shelf/dynamodb-query-optimized
 ```
 
 ## Benchmark
@@ -133,9 +133,9 @@ console.log(results);
 
 ```sh
 $ git checkout master
-$ yarn build
-$ yarn version
-$ yarn publish
+$ pnpm build
+$ pnpm version
+$ pnpm publish
 $ git push origin master --tags
 ```
 

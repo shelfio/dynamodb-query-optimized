@@ -15,6 +15,7 @@ const config = {
       },
     ],
   },
+  resolver: 'ts-jest-resolver',
   transformIgnorePatterns: [
     `node_modules/(?!(${ES_PACKAGES_TO_TRANSFORM.join('|')}))/node_modules/.+\\.js`,
   ],

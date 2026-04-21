@@ -6,8 +6,8 @@ import type {
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import type {AttributeValue, WriteRequest} from '@aws-sdk/client-dynamodb';
-import {ddb} from './ddb';
-import {batchWrite} from './insert-many';
+import {ddb} from './ddb.js';
+import {batchWrite} from './insert-many.js';
 
 export async function deleteAll(params: ScanCommandInput): Promise<BatchWriteCommandOutput[]> {
   let LastEvaluatedKey;

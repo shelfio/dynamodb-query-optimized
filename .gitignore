@@ -11,6 +11,7 @@ draft.js
 draft.ts
 *.draft.ts
 yarn.lock
+package-lock.json
 
 .env
 .DS_Store

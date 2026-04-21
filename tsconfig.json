@@ -1,8 +1,13 @@
 {
   "extends": "@shelf/tsconfig/backend",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "module": "NodeNext",
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": "src",
+    "outDir": "lib"
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "**/*.test.*"],
   "include": ["src"]
 }

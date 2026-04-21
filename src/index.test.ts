@@ -1,9 +1,9 @@
 import {marshall} from '@aws-sdk/util-dynamodb';
 import {QueryCommand} from '@aws-sdk/client-dynamodb';
-import {insertMany} from './helpers/insert-many';
-import {deleteAll} from './helpers/delete-all';
-import {ddb} from './helpers/ddb';
-import {queryOptimized, queryOptimizedV1, queryRegular} from './';
+import {insertMany} from './helpers/insert-many.js';
+import {deleteAll} from './helpers/delete-all.js';
+import {ddb} from './helpers/ddb.js';
+import {queryOptimized, queryOptimizedV1, queryRegular} from './index.js';
 
 const hash_key = 'some-hash-key';
 const range_key = 'some-range-key';
