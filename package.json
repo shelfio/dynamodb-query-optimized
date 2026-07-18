@@ -58,7 +58,7 @@
     "lint-staged": "16.4.0",
     "oxfmt": "0.44.0",
     "ts-jest-resolver": "2.0.1",
-    "typescript": "6.0.2"
+    "typescript": "6.0.3"
   },
   "peerDependencies": {
     "@aws-sdk/client-dynamodb": "3.x.x",
