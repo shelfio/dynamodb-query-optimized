@@ -37,7 +37,7 @@
     ]
   },
   "dependencies": {
-    "@shelf/aws-ddb-with-xray": "2.1.0",
+    "@shelf/aws-ddb-with-xray": "2.4.1",
     "lodash-es": "4.18.1",
     "p-map": "4.0.0"
   },
