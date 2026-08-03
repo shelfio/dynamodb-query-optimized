@@ -39,7 +39,7 @@
   "dependencies": {
     "@shelf/aws-ddb-with-xray": "2.1.0",
     "lodash-es": "4.18.1",
-    "p-map": "4.0.0"
+    "p-map": "7.0.6"
   },
   "devDependencies": {
     "@shelf/eslint-config": "6.3.0",
